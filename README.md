@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/JSainsburyPLC/xecho.svg?branch=master)](https://travis-ci.org/JSainsburyPLC/xecho)
+
 # xecho
 
 A thin wrapper around https://echo.labstack.com. Includes
