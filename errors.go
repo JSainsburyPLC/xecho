@@ -11,9 +11,9 @@ import (
 const stackSize = 4 << 10 // 4kb
 
 type Error struct {
-	Status int               `json:"-"`
-	Code   string            `json:"code"`
-	Detail string            `json:"detail"`
+	Status int               `json:"-" example:"400"`
+	Code   string            `json:"code" example:"BAD_REQUEST"`
+	Detail string            `json:"detail" example:"Bad request"`
 	Params map[string]string `json:"-"`
 }
 

@@ -14,6 +14,7 @@ const correlationIDHeaderName = "Correlation-Id"
 type Context struct {
 	echo.Context
 	CorrelationID string
+	HttpClient    *http.Client
 	NewRelicApp   newrelic.Application
 	NewRelicTx    newrelic.Transaction
 	logger        *Logger
@@ -55,39 +56,55 @@ func ContextMiddleware(
 		return func(c echo.Context) error {
 			correlationID := getCorrelationID(c.Request())
 			ip := c.RealIP()
-			newRelicTx := newRelicApp.StartTransaction(
-				c.Request().URL.Path,
-				c.Response().Writer,
+			logger := requestScopeLogger(
+				logger,
 				c.Request(),
+				c.Path(),
+				ip,
+				correlationID,
+				appName,
+				envName,
 			)
-			defer func() { _ = newRelicTx.End() }()
-			// new relic tx wraps response writer
-			c.Response().Writer = newRelicTx
 
-			cc := &Context{
-				Context:       c,
-				CorrelationID: correlationID,
-				NewRelicApp:   newRelicApp,
-				NewRelicTx:    newRelicTx,
-				logger: requestScopeLogger(
-					logger,
-					c.Request(),
-					c.Path(),
-					ip,
-					correlationID,
-					appName,
-					envName,
-				),
-			}
-
-			// TODO: build version attribute (and in logs)
-			cc.AddNewRelicAttribute("route", c.Path())
-			cc.AddNewRelicAttribute("correlationID", correlationID)
-			cc.AddNewRelicAttribute("ip", ip)
+			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug)
 
 			return h(cc)
 		}
 	}
+}
+
+func NewContext(
+	echoCtx echo.Context,
+	newRelicApp newrelic.Application,
+	logger *Logger,
+	correlationID string,
+	isDebug bool,
+) *Context {
+	newRelicTx := newRelicApp.StartTransaction(
+		echoCtx.Request().URL.Path,
+		echoCtx.Response().Writer,
+		echoCtx.Request(),
+	)
+	defer func() { _ = newRelicTx.End() }()
+	// new relic tx wraps response writer
+	echoCtx.Response().Writer = newRelicTx
+
+	customCtx := &Context{
+		Context:       echoCtx,
+		CorrelationID: correlationID,
+		NewRelicApp:   newRelicApp,
+		NewRelicTx:    newRelicTx,
+		logger:        logger,
+	}
+
+	customCtx.HttpClient = NewHttpClient(customCtx, isDebug)
+
+	// TODO: build version attribute (and in logs)
+	customCtx.AddNewRelicAttribute("route", echoCtx.Path())
+	customCtx.AddNewRelicAttribute("correlationID", correlationID)
+	customCtx.AddNewRelicAttribute("ip", echoCtx.RealIP())
+
+	return customCtx
 }
 
 func getCorrelationID(r *http.Request) string {
