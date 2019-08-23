@@ -22,7 +22,7 @@ func TestEchoHandler(t *testing.T) {
 
 func TestContextMiddleware(t *testing.T) {
 	ctx, _, _ := getEchoTestCtx()
-	mw := ContextMiddleware("testApp", "testEnv", NullLogger(), true, stubNewRelicApp())
+	mw := ContextMiddleware("testApp", "testEnv", "build-1.2.3", NullLogger(), true, stubNewRelicApp())
 	hCalled := false
 	h := EchoHandler(func(c *Context) error {
 		hCalled = true

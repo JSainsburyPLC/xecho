@@ -48,6 +48,7 @@ func (c *Context) AddNewRelicAttribute(key string, val interface{}) {
 func ContextMiddleware(
 	appName string,
 	envName string,
+	buildVersion string,
 	logger *logrus.Logger,
 	isDebug bool,
 	newRelicApp newrelic.Application,
@@ -64,9 +65,10 @@ func ContextMiddleware(
 				correlationID,
 				appName,
 				envName,
+				buildVersion,
 			)
 
-			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug)
+			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug, buildVersion)
 
 			return h(cc)
 		}
@@ -79,6 +81,7 @@ func NewContext(
 	logger *Logger,
 	correlationID string,
 	isDebug bool,
+	buildVersion string,
 ) *Context {
 	newRelicTx := newRelicApp.StartTransaction(
 		echoCtx.Request().URL.Path,
@@ -103,6 +106,7 @@ func NewContext(
 	customCtx.AddNewRelicAttribute("route", echoCtx.Path())
 	customCtx.AddNewRelicAttribute("correlationID", correlationID)
 	customCtx.AddNewRelicAttribute("ip", echoCtx.RealIP())
+	customCtx.AddNewRelicAttribute("buildVersion", buildVersion)
 
 	return customCtx
 }
