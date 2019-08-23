@@ -2,17 +2,19 @@ package xecho
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/labstack/echo"
 	"github.com/newrelic/go-agent"
 	"github.com/newrelic/go-agent/_integrations/nrlogrus"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type Config struct {
 	ProjectName       string
 	AppName           string
 	EnvName           string
+	BuildVersion      string
 	LogLevel          logrus.Level
 	IsDebug           bool
 	NewRelicLicense   string
@@ -26,6 +28,7 @@ func NewConfig() Config {
 		ProjectName:       "",
 		AppName:           "",
 		EnvName:           "",
+		BuildVersion:      "",
 		LogLevel:          logrus.InfoLevel,
 		IsDebug:           false,
 		NewRelicLicense:   "",
@@ -45,10 +48,10 @@ func Echo(conf Config) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
-	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName)
+	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName, conf.BuildVersion)
 
 	// the order of these middleware is important - context should be first, error should be after logging ones
-	e.Use(ContextMiddleware(conf.AppName, conf.EnvName, logger, conf.IsDebug, newRelicApp))
+	e.Use(ContextMiddleware(conf.AppName, conf.EnvName, conf.BuildVersion, logger, conf.IsDebug, newRelicApp))
 	e.Use(PanicHandlerMiddleware(conf.ErrorHandler))
 	if conf.UseDefaultHeaders {
 		e.Use(DefaultHeadersMiddleware())

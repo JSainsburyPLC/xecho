@@ -3,13 +3,14 @@ package xecho
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/labstack/echo"
-	"github.com/labstack/gommon/log"
-	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+
+	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
+	"github.com/sirupsen/logrus"
 )
 
 func RequestLoggerMiddleware() echo.MiddlewareFunc {
@@ -97,11 +98,13 @@ func appScopeLogger(
 	logger *logrus.Logger,
 	appName string,
 	envName string,
+	buildVersion string,
 ) *Logger {
 	entry := logger.WithFields(logrus.Fields{
-		"app":   appName,
-		"env":   envName,
-		"scope": "app",
+		"app":           appName,
+		"env":           envName,
+		"build_version": buildVersion,
+		"scope":         "app",
 	})
 	return &Logger{entry}
 }
@@ -114,10 +117,12 @@ func requestScopeLogger(
 	correlationID string,
 	appName string,
 	envName string,
+	buildVersion string,
 ) *Logger {
 	ctxLogger := logger.WithFields(logrus.Fields{
 		"app":            appName,
 		"env":            envName,
+		"build_version":  buildVersion,
 		"scope":          "request",
 		"correlation_id": correlationID,
 		"url":            r.RequestURI,
