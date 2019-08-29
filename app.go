@@ -10,6 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const headerBuildVersion = "Build-Version"
+
 type Config struct {
 	ProjectName       string
 	AppName           string
@@ -61,6 +63,9 @@ func Echo(conf Config) *echo.Echo {
 	e.Use(ErrorHandlerMiddleware(conf.ErrorHandler))
 
 	e.GET("/health", EchoHandler(func(c *Context) error {
+		if len(conf.BuildVersion) > 0 {
+			c.Response().Header().Add(headerBuildVersion, conf.BuildVersion)
+		}
 		return c.JSONBlob(http.StatusOK, []byte(`{"status": "ok"}`))
 	}))
 
