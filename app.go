@@ -3,6 +3,7 @@ package xecho
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo"
 	"github.com/newrelic/go-agent"
@@ -41,13 +42,20 @@ func NewConfig() Config {
 }
 
 func Echo(conf Config) *echo.Echo {
-	logger := logrus.New()
-	logger.SetLevel(conf.LogLevel)
-	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger := logger(conf)
+	logger.WithFields(
+		logrus.Fields{
+			"project":       conf.ProjectName,
+			"application":   conf.AppName,
+			"environment":   conf.EnvName,
+			"build_version": conf.BuildVersion,
+			"hostname":      getHostName(),
+		}).Infof("XEcho app created %s(%s)", conf.AppName, conf.BuildVersion)
 
 	newRelicApp := createNewRelicApp(conf, logger)
 
 	e := echo.New()
+
 	e.HideBanner = true
 	e.HidePort = true
 	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName)
@@ -70,6 +78,21 @@ func Echo(conf Config) *echo.Echo {
 	}))
 
 	return e
+}
+
+func getHostName() string {
+	name, err := os.Hostname()
+	if err != nil {
+		name = "ERROR"
+	}
+	return name
+}
+
+func logger(conf Config) *logrus.Logger {
+	logger := logrus.New()
+	logger.SetLevel(conf.LogLevel)
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	return logger
 }
 
 func createNewRelicApp(conf Config, logger *logrus.Logger) newrelic.Application {
