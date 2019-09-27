@@ -65,7 +65,6 @@ func ContextMiddleware(
 				correlationID,
 				appName,
 				envName,
-				buildVersion,
 			)
 
 			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug, buildVersion)

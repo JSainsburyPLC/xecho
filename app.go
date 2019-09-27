@@ -50,7 +50,7 @@ func Echo(conf Config) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
-	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName, conf.BuildVersion)
+	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName)
 
 	// the order of these middleware is important - context should be first, error should be after logging ones
 	e.Use(ContextMiddleware(conf.AppName, conf.EnvName, conf.BuildVersion, logger, conf.IsDebug, newRelicApp))
