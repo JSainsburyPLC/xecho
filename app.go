@@ -18,6 +18,7 @@ type Config struct {
 	EnvName           string
 	BuildVersion      string
 	LogLevel          logrus.Level
+	LogFormatter      logrus.Formatter
 	IsDebug           bool
 	NewRelicLicense   string
 	NewRelicEnabled   bool
@@ -32,6 +33,7 @@ func NewConfig() Config {
 		EnvName:           "",
 		BuildVersion:      "",
 		LogLevel:          logrus.InfoLevel,
+		LogFormatter:      &logrus.JSONFormatter{},
 		IsDebug:           false,
 		NewRelicLicense:   "",
 		NewRelicEnabled:   true,
@@ -43,7 +45,7 @@ func NewConfig() Config {
 func Echo(conf Config) *echo.Echo {
 	logger := logrus.New()
 	logger.SetLevel(conf.LogLevel)
-	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetFormatter(conf.LogFormatter)
 
 	newRelicApp := createNewRelicApp(conf, logger)
 
