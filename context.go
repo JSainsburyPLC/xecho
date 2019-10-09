@@ -47,10 +47,6 @@ func (c *Context) AddNewRelicAttribute(key string, val interface{}) {
 	}
 }
 
-func (c *Context) AppendNewRelicToClient(httpClient *http.Client) *http.Client {
-	return NewHttpClient(c, httpClient)
-}
-
 func ContextMiddleware(
 	appName string,
 	envName string,

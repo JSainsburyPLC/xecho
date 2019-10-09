@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
-
 	"github.com/labstack/echo"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/newrelic/go-agent/_integrations/nrlogrus"
@@ -50,16 +48,6 @@ func TestGetCorrelationID(t *testing.T) {
 	r.Header.Set("Correlation-Id", "testing-id")
 	id = getCorrelationID(r)
 	assert.Equal(t, "testing-id", id)
-}
-
-func TestAppendNewRelicToClient(t *testing.T) {
-	echoCtx, _, _ := getEchoTestCtx()
-	ctx := NewContext(echoCtx, stubNewRelicApp(), &Logger{}, "correlationid", false, "build-1.2.3")
-	//check it uses the same client
-	const timeout = time.Second * 10
-	client := &http.Client{Timeout: timeout}
-	appendedClient := ctx.AppendNewRelicToClient(client)
-	assert.Equal(t, timeout, appendedClient.Timeout)
 }
 
 func NullLogger() *logrus.Logger {
