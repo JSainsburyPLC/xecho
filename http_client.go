@@ -1,11 +1,10 @@
 package xecho
 
 import (
+	"github.com/newrelic/go-agent"
 	"net/http"
 	"net/http/httputil"
 	"time"
-
-	newrelic "github.com/newrelic/go-agent"
 )
 
 type loggingTransport struct {
