@@ -107,7 +107,7 @@ func NewContext(
 		IsDebug:       isDebug,
 	}
 
-	// deprecated in favour of context.GetHttpClientWithNewRelic()
+	// deprecated in favour of context.AppendNewRelicToClient()
 	customCtx.HttpClient = NewHttpClient(customCtx, &http.Client{Transport: &http.Transport{}})
 
 	// TODO: build version attribute (and in logs)
