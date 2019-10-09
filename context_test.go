@@ -1,15 +1,15 @@
 package xecho
 
 import (
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 	"github.com/labstack/echo"
 	newrelic "github.com/newrelic/go-agent"
 	"github.com/newrelic/go-agent/_integrations/nrlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 func TestEchoHandler(t *testing.T) {
