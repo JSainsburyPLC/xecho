@@ -1,13 +1,12 @@
 package xecho
 
 import (
-	"net/http"
-	"testing"
-	"time"
-
 	"github.com/sirupsen/logrus"
 	"github.com/steinfletcher/apitest"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"testing"
+	"time"
 )
 
 func TestHttpClient(t *testing.T) {
