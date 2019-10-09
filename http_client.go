@@ -1,10 +1,11 @@
 package xecho
 
 import (
-	"github.com/newrelic/go-agent"
 	"net/http"
 	"net/http/httputil"
 	"time"
+
+	newrelic "github.com/newrelic/go-agent"
 )
 
 type loggingTransport struct {
@@ -47,14 +48,16 @@ func (t *loggingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 func NewHttpClient(
 	context *Context,
-	isDebug bool,
+	client *http.Client,
 ) *http.Client {
+	// wrap transport
 	loggingTransport := &loggingTransport{
 		inboundContext: context,
-		isDebug:        isDebug,
-		transport:      &http.Transport{},
+		isDebug:        context.IsDebug,
+		transport:      client.Transport,
 	}
-	return &http.Client{Transport: loggingTransport}
+	client.Transport = loggingTransport
+	return client
 }
 
 func debugDumpRequest(r *http.Request, logger *Logger, isDebug bool) error {

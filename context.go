@@ -2,11 +2,12 @@ package xecho
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
-	"github.com/newrelic/go-agent"
+	newrelic "github.com/newrelic/go-agent"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 const correlationIDHeaderName = "Correlation-Id"
@@ -14,10 +15,11 @@ const correlationIDHeaderName = "Correlation-Id"
 type Context struct {
 	echo.Context
 	CorrelationID string
-	HttpClient    *http.Client
+	HttpClient    *http.Client // deprecated
 	NewRelicApp   newrelic.Application
 	NewRelicTx    newrelic.Transaction
 	logger        *Logger
+	IsDebug       bool
 }
 
 type Handler func(c *Context) error
@@ -43,6 +45,10 @@ func (c *Context) AddNewRelicAttribute(key string, val interface{}) {
 	if err := c.NewRelicTx.AddAttribute(key, val); err != nil {
 		c.Logger().Errorf("failed to add attr '%s' to new relic tx: %+v", key, err)
 	}
+}
+
+func (c *Context) AppendNewRelicToClient(httpClient *http.Client) *http.Client {
+	return NewHttpClient(c, httpClient)
 }
 
 func ContextMiddleware(
@@ -98,9 +104,11 @@ func NewContext(
 		NewRelicApp:   newRelicApp,
 		NewRelicTx:    newRelicTx,
 		logger:        logger,
+		IsDebug:       isDebug,
 	}
 
-	customCtx.HttpClient = NewHttpClient(customCtx, isDebug)
+	// deprecated in favour of context.GetHttpClientWithNewRelic()
+	customCtx.HttpClient = NewHttpClient(customCtx, &http.Client{Transport: &http.Transport{}})
 
 	// TODO: build version attribute (and in logs)
 	customCtx.AddNewRelicAttribute("route", echoCtx.Path())
