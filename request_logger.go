@@ -40,7 +40,7 @@ func createMap(c echo.Context, timeTaken time.Duration, lrw *statefulResponseWri
 	fields := logrus.Fields{
 		"url":         r.RequestURI,
 		"path":        path,
-		"duration_ms": timeTaken.Milliseconds(),
+		"duration_ms": milliseconds(timeTaken),
 		"remote_addr": r.RemoteAddr,
 		"request":     requestMap(r, c),
 		"response":    responseMap(c.Response(), lrw.statusCode),
@@ -51,6 +51,10 @@ func createMap(c echo.Context, timeTaken time.Duration, lrw *statefulResponseWri
 	}
 
 	return fields
+}
+
+func milliseconds(timeTaken time.Duration) int64 {
+	return int64(timeTaken) / 1e6
 }
 
 func responseMap(r *echo.Response, statusCode int) logrus.Fields {
