@@ -13,23 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func RequestLoggerMiddleware() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return EchoHandler(func(c *Context) error {
-			lrw := &statefulResponseWriter{w: c.Response().Writer}
-			c.Response().Writer = lrw
-
-			c.Logger()
-
-			c.Logger().Infof("Inbound request on path: '%s'", c.Request().URL.Path)
-			err := next(c)
-			c.Logger().Infof("Response with code: '%d'", lrw.statusCode)
-
-			return err
-		})
-	}
-}
-
 func DebugLoggerMiddleware(isDebug bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return EchoHandler(func(c *Context) error {
@@ -109,34 +92,14 @@ func appScopeLogger(
 	return &Logger{entry}
 }
 
-func requestScopeLogger(
-	logger *logrus.Logger,
-	r *http.Request,
-	route string,
-	ip string,
-	correlationID string,
-	appName string,
-	envName string,
-	buildVersion string,
-) *Logger {
+func requestScopeLogger(logger *logrus.Logger, ip string, correlationID string, appName string, envName string, buildVersion string) *Logger {
 	ctxLogger := logger.WithFields(logrus.Fields{
-		"app":            appName,
+		"application":    appName,
 		"env":            envName,
 		"build_version":  buildVersion,
 		"scope":          "request",
 		"correlation_id": correlationID,
-		"url":            r.RequestURI,
-		"route":          route,
-		"remote_addr":    r.RemoteAddr,
-		"method":         r.Method,
 		"ip":             ip,
-		"headers": logrus.Fields{
-			"host":              r.Host,
-			"user-agent":        r.UserAgent(),
-			"referer":           r.Referer(),
-			"x-forwarded-for":   r.Header.Get("X-Forwarded-For"),
-			"x-forwarded-proto": r.Header.Get("X-Forwarded-Proto"),
-		},
 	})
 	return &Logger{ctxLogger}
 }

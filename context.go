@@ -2,11 +2,12 @@ package xecho
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"github.com/newrelic/go-agent"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 const correlationIDHeaderName = "Correlation-Id"
@@ -55,20 +56,9 @@ func ContextMiddleware(
 ) echo.MiddlewareFunc {
 	return func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			correlationID := getCorrelationID(c.Request())
-			ip := c.RealIP()
-			logger := requestScopeLogger(
-				logger,
-				c.Request(),
-				c.Path(),
-				ip,
-				correlationID,
-				appName,
-				envName,
-				buildVersion,
-			)
+			logger := requestScopeLogger(logger, c.RealIP(), getCorrelationID(c.Request()), appName, envName, buildVersion)
 
-			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug, buildVersion)
+			cc := NewContext(c, newRelicApp, logger, getCorrelationID(c.Request()), isDebug, buildVersion)
 			defer cc.NewRelicTx.End()
 
 			return h(cc)
