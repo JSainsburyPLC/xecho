@@ -84,7 +84,7 @@ func appScopeLogger(
 	buildVersion string,
 ) *Logger {
 	entry := logger.WithFields(logrus.Fields{
-		"app":           appName,
+		"application":   appName,
 		"env":           envName,
 		"build_version": buildVersion,
 		"scope":         "app",
