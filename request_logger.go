@@ -66,8 +66,10 @@ func requestMap(r *http.Request, c echo.Context) logrus.Fields {
 		"host_name":    r.Host,
 		"query_params": c.QueryParams(),
 		"headers": logrus.Fields{
-			"user-agent": r.UserAgent(),
-			"referer":    r.Referer(),
+			"user-agent":        r.UserAgent(),
+			"referer":           r.Referer(),
+			"x-forwarded-for":   r.Header.Get("X-Forwarded-For"),
+			"x-forwarded-proto": r.Header.Get("X-Forwarded-Proto"),
 		},
 	}
 	if r.ContentLength > 0 {

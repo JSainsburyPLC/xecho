@@ -57,9 +57,21 @@ func ContextMiddleware(
 	return func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			correlationID := getCorrelationID(c.Request())
-			logger := requestScopeLogger(logger, c.Request(), c.Path(), c.RealIP(), correlationID, appName, envName, buildVersion)
+			ip := c.RealIP()
+			logger := requestScopeLogger(
+				logger,
+				c.Request(),
+				c.Path(),
+				ip,
+				correlationID,
+				appName,
+				envName,
+				buildVersion,
+			)
+
 			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug, buildVersion)
 			defer cc.NewRelicTx.End()
+
 			return h(cc)
 		}
 	}
