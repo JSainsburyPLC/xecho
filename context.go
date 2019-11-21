@@ -56,11 +56,10 @@ func ContextMiddleware(
 ) echo.MiddlewareFunc {
 	return func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			logger := requestScopeLogger(logger, c.RealIP(), getCorrelationID(c.Request()), appName, envName, buildVersion)
-
-			cc := NewContext(c, newRelicApp, logger, getCorrelationID(c.Request()), isDebug, buildVersion)
+			correlationID := getCorrelationID(c.Request())
+			logger := requestScopeLogger(logger, c.Request(), c.Path(), c.RealIP(), correlationID, appName, envName, buildVersion)
+			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug, buildVersion)
 			defer cc.NewRelicTx.End()
-
 			return h(cc)
 		}
 	}

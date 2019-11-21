@@ -35,13 +35,8 @@ func RequestLogger(c *Context, next echo.HandlerFunc, time TimeProvider) error {
 
 func createMap(c echo.Context, timeTaken time.Duration, lrw *statefulResponseWriter, err error) logrus.Fields {
 	r := c.Request()
-	path := c.Path()
-
 	fields := logrus.Fields{
-		"url":         r.RequestURI,
-		"path":        path,
 		"duration_ms": milliseconds(timeTaken),
-		"remote_addr": r.RemoteAddr,
 		"request":     requestMap(r, c),
 		"response":    responseMap(c.Response(), lrw.statusCode),
 	}

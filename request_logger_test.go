@@ -75,8 +75,6 @@ func TestRequestLogger_LogTest(t *testing.T) {
 	assert.Equal(t, "set_one", fields["correlation_id"])
 	assert.Equal(t, "request", fields["scope"])
 	assert.Equal(t, float64(755), fields["duration_ms"])
-	assert.Equal(t, "/this/is/the/site", fields["path"])
-	assert.Equal(t, urlTo, fields["url"])
 
 	request, ok := fields["request"].(map[string]interface{})
 	assert.True(t, ok)
