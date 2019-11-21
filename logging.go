@@ -13,6 +13,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func newLogger(config Config) *logrus.Logger {
+	logger := logrus.New()
+	logger.SetLevel(config.LogLevel)
+	logger.SetFormatter(config.LogFormatter)
+	return logger
+}
+
 func DebugLoggerMiddleware(isDebug bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return EchoHandler(func(c *Context) error {
@@ -92,13 +99,26 @@ func appScopeLogger(
 	return &Logger{entry}
 }
 
-func requestScopeLogger(logger *logrus.Logger, ip string, correlationID string, appName string, envName string, buildVersion string) *Logger {
+func requestScopeLogger(
+	logger *logrus.Logger,
+	r *http.Request,
+	route string,
+	ip string,
+	correlationID string,
+	appName string,
+	envName string,
+	buildVersion string,
+) *Logger {
 	ctxLogger := logger.WithFields(logrus.Fields{
 		"application":    appName,
 		"env":            envName,
 		"build_version":  buildVersion,
 		"scope":          "request",
 		"correlation_id": correlationID,
+		"url":            r.URL.String(),
+		"path":           route,
+		"remote_addr":    r.RemoteAddr,
+		"method":         r.Method,
 		"ip":             ip,
 	})
 	return &Logger{ctxLogger}

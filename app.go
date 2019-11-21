@@ -25,6 +25,7 @@ type Config struct {
 	NewRelicEnabled   bool
 	ErrorHandler      ErrorHandlerFunc
 	UseDefaultHeaders bool
+	LoggerProvider    func(config Config) *logrus.Logger
 }
 
 func NewConfig() Config {
@@ -40,13 +41,13 @@ func NewConfig() Config {
 		NewRelicEnabled:   true,
 		ErrorHandler:      DefaultErrorHandler(),
 		UseDefaultHeaders: true,
+		LoggerProvider:    newLogger,
 	}
 }
 
 func Echo(conf Config) *echo.Echo {
-	logger := logrus.New()
-	logger.SetLevel(conf.LogLevel)
-	logger.SetFormatter(conf.LogFormatter)
+
+	logger := conf.LoggerProvider(conf)
 
 	newRelicApp := createNewRelicApp(conf, logger)
 
@@ -55,16 +56,22 @@ func Echo(conf Config) *echo.Echo {
 	e.HidePort = true
 	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName, conf.BuildVersion)
 
-	// the order of these middleware is important - context should be first, error should be after logging ones
+	// The order of the beginning middleware is important:
+	// - ContextMiddleware should be first: Creating the context - head call (before next())
+	// - Error handling return message and New Relic logging - tail call (after next())
+	// - Request logger is next to log the request as well as the converted error on a - tail call
+	// - Convert error ( pre error handler) to convert the error coming down from the handlers in the call chain - tail call.
+	// - Panic handler catch any panics caused by handlers that are added to the framework and convert them into an error to be handled by the error handler - tail call
 	e.Use(ContextMiddleware(conf.AppName, conf.EnvName, conf.BuildVersion, logger, conf.IsDebug, newRelicApp))
+	e.Use(ErrorHandlerMiddleware(conf.ErrorHandler))
+	e.Use(RequestLoggerMiddleware(time.Now))
+	e.Use(ErrorConverter())
 	e.Use(PanicHandlerMiddleware(conf.ErrorHandler))
+
 	if conf.UseDefaultHeaders {
 		e.Use(DefaultHeadersMiddleware())
 	}
-	e.Use(RequestLoggerMiddleware(time.Now))
 	e.Use(DebugLoggerMiddleware(conf.IsDebug))
-	e.Use(ErrorHandlerMiddleware(conf.ErrorHandler))
-
 	e.GET("/health", EchoHandler(func(c *Context) error {
 		if len(conf.BuildVersion) > 0 {
 			c.Response().Header().Add(headerBuildVersion, conf.BuildVersion)
