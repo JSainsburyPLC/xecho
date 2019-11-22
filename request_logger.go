@@ -1,6 +1,7 @@
 package xecho
 
 import (
+	"math"
 	"net/http"
 	"time"
 
@@ -53,18 +54,18 @@ func milliseconds(timeTaken time.Duration) int64 {
 }
 
 func responseMap(r *echo.Response, statusCode int) logrus.Fields {
-	fields := logrus.Fields{
+	return logrus.Fields{
 		"status_code":    statusCode,
-		"content_length": r.Size,
+		"content_length": math.Max(float64(r.Size), 0),
 	}
-	return fields
 }
 
 func requestMap(r *http.Request, c echo.Context) logrus.Fields {
-	fields := logrus.Fields{
-		"method":       r.Method,
-		"host_name":    r.Host,
-		"query_params": c.QueryParams(),
+	return logrus.Fields{
+		"method":         r.Method,
+		"host_name":      r.Host,
+		"query_params":   c.QueryParams(),
+		"Content-length": math.Max(float64(r.ContentLength), 0),
 		"headers": logrus.Fields{
 			"user-agent":        r.UserAgent(),
 			"referer":           r.Referer(),
@@ -72,8 +73,4 @@ func requestMap(r *http.Request, c echo.Context) logrus.Fields {
 			"x-forwarded-proto": r.Header.Get("X-Forwarded-Proto"),
 		},
 	}
-	if r.ContentLength > 0 {
-		fields["Content-length"] = r.ContentLength
-	}
-	return fields
 }
