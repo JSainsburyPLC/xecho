@@ -2,11 +2,12 @@ package xecho
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"github.com/newrelic/go-agent"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 const correlationIDHeaderName = "Correlation-Id"

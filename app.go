@@ -3,6 +3,7 @@ package xecho
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/newrelic/go-agent"
@@ -60,7 +61,7 @@ func Echo(conf Config) *echo.Echo {
 	if conf.UseDefaultHeaders {
 		e.Use(DefaultHeadersMiddleware())
 	}
-	e.Use(RequestLoggerMiddleware())
+	e.Use(RequestLoggerMiddleware(time.Now))
 	e.Use(DebugLoggerMiddleware(conf.IsDebug))
 	e.Use(ErrorHandlerMiddleware(conf.ErrorHandler))
 
