@@ -81,13 +81,11 @@ func appScopeLogger(
 	logger *logrus.Logger,
 	appName string,
 	envName string,
-	buildVersion string,
 ) *Logger {
 	entry := logger.WithFields(logrus.Fields{
-		"application":   appName,
-		"env":           envName,
-		"build_version": buildVersion,
-		"scope":         "app",
+		"application": appName,
+		"env":         envName,
+		"scope":       "application",
 	})
 	return &Logger{entry}
 }
@@ -100,19 +98,24 @@ func requestScopeLogger(
 	correlationID string,
 	appName string,
 	envName string,
-	buildVersion string,
 ) *Logger {
 	ctxLogger := logger.WithFields(logrus.Fields{
 		"application":    appName,
 		"env":            envName,
-		"build_version":  buildVersion,
 		"scope":          "request",
 		"correlation_id": correlationID,
-		"url":            r.URL.String(),
-		"path":           route,
+		"url":            r.RequestURI,
+		"route":          route,
 		"remote_addr":    r.RemoteAddr,
 		"method":         r.Method,
 		"ip":             ip,
+		"headers": logrus.Fields{
+			"host":              r.Host,
+			"user-agent":        r.UserAgent(),
+			"referer":           r.Referer(),
+			"x-forwarded-for":   r.Header.Get("X-Forwarded-For"),
+			"x-forwarded-proto": r.Header.Get("X-Forwarded-Proto"),
+		},
 	})
 	return &Logger{ctxLogger}
 }
@@ -135,7 +138,7 @@ func (l *Logger) Prefix() string {
 	return "" // not implemented - only added for API compatibility with echo logger
 }
 
-func (l *Logger) SetPrefix(prefix string) {
+func (l *Logger) SetPrefix(_ string) {
 	// not implemented - only added for API compatibility with echo logger
 }
 
@@ -147,7 +150,7 @@ func (l *Logger) SetLevel(lvl log.Lvl) {
 	l.Logger.Level = echoLeveltoLogrusLevel(lvl)
 }
 
-func (l *Logger) SetHeader(h string) {
+func (l *Logger) SetHeader(_ string) {
 	// not implemented - only added for API compatibility with echo logger
 }
 

@@ -3,6 +3,7 @@ package xecho
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/labstack/echo"
@@ -25,6 +26,7 @@ type Config struct {
 	NewRelicEnabled   bool
 	ErrorHandler      ErrorHandlerFunc
 	UseDefaultHeaders bool
+	RoutePrefix       string
 }
 
 func NewConfig() Config {
@@ -33,6 +35,7 @@ func NewConfig() Config {
 		AppName:           "",
 		EnvName:           "",
 		BuildVersion:      "",
+		RoutePrefix:       "",
 		LogLevel:          logrus.InfoLevel,
 		LogFormatter:      &logrus.JSONFormatter{},
 		IsDebug:           false,
@@ -44,16 +47,23 @@ func NewConfig() Config {
 }
 
 func Echo(conf Config) *echo.Echo {
-	logger := logrus.New()
-	logger.SetLevel(conf.LogLevel)
-	logger.SetFormatter(conf.LogFormatter)
+	logger := logger(conf)
+	logger.WithFields(
+		logrus.Fields{
+			"project":       conf.ProjectName,
+			"application":   conf.AppName,
+			"environment":   conf.EnvName,
+			"build_version": conf.BuildVersion,
+			"hostname":      getHostName(),
+		}).Infof("XEcho app created %s(%s)", conf.AppName, conf.BuildVersion)
 
 	newRelicApp := createNewRelicApp(conf, logger)
 
 	e := echo.New()
+
 	e.HideBanner = true
 	e.HidePort = true
-	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName, conf.BuildVersion)
+	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName)
 
 	// the order of these middleware is important - context should be first, error should be after logging ones
 	e.Use(ContextMiddleware(conf.AppName, conf.EnvName, conf.BuildVersion, logger, conf.IsDebug, newRelicApp))
@@ -65,14 +75,38 @@ func Echo(conf Config) *echo.Echo {
 	e.Use(DebugLoggerMiddleware(conf.IsDebug))
 	e.Use(ErrorHandlerMiddleware(conf.ErrorHandler))
 
-	e.GET("/health", EchoHandler(func(c *Context) error {
+	addHealthCheck(conf, e)
+
+	return e
+}
+
+func addHealthCheck(conf Config, e *echo.Echo) {
+	healthRoute := "/health"
+	if conf.RoutePrefix != "" {
+		healthRoute = fmt.Sprintf("%s/health", conf.RoutePrefix)
+	}
+
+	e.GET(healthRoute, EchoHandler(func(c *Context) error {
 		if len(conf.BuildVersion) > 0 {
 			c.Response().Header().Add(headerBuildVersion, conf.BuildVersion)
 		}
 		return c.JSONBlob(http.StatusOK, []byte(`{"status": "ok"}`))
 	}))
+}
 
-	return e
+func getHostName() string {
+	name, err := os.Hostname()
+	if err != nil {
+		name = "ERROR"
+	}
+	return name
+}
+
+func logger(conf Config) *logrus.Logger {
+	logger := logrus.New()
+	logger.SetLevel(conf.LogLevel)
+	logger.SetFormatter(conf.LogFormatter)
+	return logger
 }
 
 func createNewRelicApp(conf Config, logger *logrus.Logger) newrelic.Application {
