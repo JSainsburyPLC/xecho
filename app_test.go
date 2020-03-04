@@ -9,16 +9,24 @@ import (
 
 func TestHealthCheck(t *testing.T) {
 	apitest.New().
-		Handler(xecho.Echo(config())).
+		Handler(xecho.Echo(config(""))).
 		Get("/health").
+		Expect(t).
+		Status(http.StatusOK).
+		Body(`{"status": "ok"}`).
+		End()
+	apitest.New().
+		Handler(xecho.Echo(config("test"))).
+		Get("/test/health").
 		Expect(t).
 		Status(http.StatusOK).
 		Body(`{"status": "ok"}`).
 		End()
 }
 
-func config() xecho.Config {
+func config(routePrefix string) xecho.Config {
 	config := xecho.NewConfig()
+	config.RoutePrefix = routePrefix
 	config.ProjectName = "acme"
 	config.AppName = "login"
 	config.EnvName = "dev"
