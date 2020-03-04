@@ -24,6 +24,7 @@ type Config struct {
 	NewRelicEnabled   bool
 	ErrorHandler      ErrorHandlerFunc
 	UseDefaultHeaders bool
+	RoutePrefix       string
 }
 
 func NewConfig() Config {
@@ -32,6 +33,7 @@ func NewConfig() Config {
 		AppName:           "",
 		EnvName:           "",
 		BuildVersion:      "",
+		RoutePrefix:       "",
 		LogLevel:          logrus.InfoLevel,
 		IsDebug:           false,
 		NewRelicLicense:   "",
@@ -70,7 +72,12 @@ func Echo(conf Config) *echo.Echo {
 	e.Use(DebugLoggerMiddleware(conf.IsDebug))
 	e.Use(ErrorHandlerMiddleware(conf.ErrorHandler))
 
-	e.GET("/health", EchoHandler(func(c *Context) error {
+	healthRoute := ""
+	if conf.RoutePrefix != healthRoute {
+		healthRoute = fmt.Sprintf("%s/health", conf.RoutePrefix)
+	}
+
+	e.GET(healthRoute, EchoHandler(func(c *Context) error {
 		if len(conf.BuildVersion) > 0 {
 			c.Response().Header().Add(headerBuildVersion, conf.BuildVersion)
 		}
