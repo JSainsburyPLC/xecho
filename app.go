@@ -75,8 +75,8 @@ func Echo(conf Config) *echo.Echo {
 	e.Use(DebugLoggerMiddleware(conf.IsDebug))
 	e.Use(ErrorHandlerMiddleware(conf.ErrorHandler))
 
-	healthRoute := ""
-	if conf.RoutePrefix != healthRoute {
+	healthRoute := "/health"
+	if conf.RoutePrefix != "" {
 		healthRoute = fmt.Sprintf("%s/health", conf.RoutePrefix)
 	}
 
