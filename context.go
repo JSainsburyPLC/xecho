@@ -2,11 +2,12 @@ package xecho
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"github.com/newrelic/go-agent"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 const correlationIDHeaderName = "Correlation-Id"
@@ -68,6 +69,7 @@ func ContextMiddleware(
 			)
 
 			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug, buildVersion)
+			defer cc.NewRelicTx.End()
 
 			return h(cc)
 		}
@@ -87,7 +89,6 @@ func NewContext(
 		echoCtx.Response().Writer,
 		echoCtx.Request(),
 	)
-	defer func() { _ = newRelicTx.End() }()
 	// new relic tx wraps response writer
 	echoCtx.Response().Writer = newRelicTx
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/newrelic/go-agent"
@@ -19,6 +20,7 @@ type Config struct {
 	EnvName           string
 	BuildVersion      string
 	LogLevel          logrus.Level
+	LogFormatter      logrus.Formatter
 	IsDebug           bool
 	NewRelicLicense   string
 	NewRelicEnabled   bool
@@ -35,6 +37,7 @@ func NewConfig() Config {
 		BuildVersion:      "",
 		RoutePrefix:       "",
 		LogLevel:          logrus.InfoLevel,
+		LogFormatter:      &logrus.JSONFormatter{},
 		IsDebug:           false,
 		NewRelicLicense:   "",
 		NewRelicEnabled:   true,
@@ -68,7 +71,7 @@ func Echo(conf Config) *echo.Echo {
 	if conf.UseDefaultHeaders {
 		e.Use(DefaultHeadersMiddleware())
 	}
-	e.Use(RequestLoggerMiddleware())
+	e.Use(RequestLoggerMiddleware(time.Now))
 	e.Use(DebugLoggerMiddleware(conf.IsDebug))
 	e.Use(ErrorHandlerMiddleware(conf.ErrorHandler))
 
@@ -98,7 +101,7 @@ func getHostName() string {
 func logger(conf Config) *logrus.Logger {
 	logger := logrus.New()
 	logger.SetLevel(conf.LogLevel)
-	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetFormatter(conf.LogFormatter)
 	return logger
 }
 

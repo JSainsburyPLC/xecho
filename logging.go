@@ -13,23 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func RequestLoggerMiddleware() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return EchoHandler(func(c *Context) error {
-			lrw := &statefulResponseWriter{w: c.Response().Writer}
-			c.Response().Writer = lrw
-
-			c.Logger()
-
-			c.Logger().Infof("Inbound request on path: '%s'", c.Request().URL.Path)
-			err := next(c)
-			c.Logger().Infof("Response with code: '%d'", lrw.statusCode)
-
-			return err
-		})
-	}
-}
-
 func DebugLoggerMiddleware(isDebug bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return EchoHandler(func(c *Context) error {
