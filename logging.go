@@ -115,10 +115,12 @@ func requestScopeLogger(
 	correlationID string,
 	appName string,
 	envName string,
+	buildVersion string,
 ) *Logger {
 	ctxLogger := logger.WithFields(logrus.Fields{
 		"application":    appName,
 		"env":            envName,
+		"build_version":  buildVersion,
 		"scope":          "request",
 		"correlation_id": correlationID,
 		"url":            r.RequestURI,
