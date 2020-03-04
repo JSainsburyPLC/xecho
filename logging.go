@@ -115,12 +115,10 @@ func requestScopeLogger(
 	correlationID string,
 	appName string,
 	envName string,
-	buildVersion string,
 ) *Logger {
 	ctxLogger := logger.WithFields(logrus.Fields{
 		"application":    appName,
 		"env":            envName,
-		"build_version":  buildVersion,
 		"scope":          "request",
 		"correlation_id": correlationID,
 		"url":            r.RequestURI,
@@ -157,7 +155,7 @@ func (l *Logger) Prefix() string {
 	return "" // not implemented - only added for API compatibility with echo logger
 }
 
-func (l *Logger) SetPrefix(prefix string) {
+func (l *Logger) SetPrefix(_ string) {
 	// not implemented - only added for API compatibility with echo logger
 }
 
@@ -169,7 +167,7 @@ func (l *Logger) SetLevel(lvl log.Lvl) {
 	l.Logger.Level = echoLeveltoLogrusLevel(lvl)
 }
 
-func (l *Logger) SetHeader(h string) {
+func (l *Logger) SetHeader(_ string) {
 	// not implemented - only added for API compatibility with echo logger
 }
 
