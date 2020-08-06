@@ -3,6 +3,7 @@ package xecho
 import (
 	"math"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo"
@@ -18,6 +19,10 @@ func RequestLoggerMiddleware(timeFn TimeProvider) echo.MiddlewareFunc {
 }
 
 func RequestLogger(c *Context, next echo.HandlerFunc, time TimeProvider) error {
+	request := c.Request()
+	if request.URL.Path == "/health" && strings.Contains(request.UserAgent(), "HealthChecker") {
+		return next(c)
+	}
 	before := time()
 	lrw := &statefulResponseWriter{ResponseWriter: c.Response().Writer}
 	c.Response().Writer = lrw
@@ -25,12 +30,12 @@ func RequestLogger(c *Context, next echo.HandlerFunc, time TimeProvider) error {
 	after := time()
 	logger, ok := c.Logger().(*Logger)
 	if !ok {
-		c.Logger().Infof("[%s] %s %d", c.Request().Method, c.Path(), lrw.statusCode)
+		c.Logger().Infof("[%s] %s %d", request.Method, c.Path(), lrw.statusCode)
 		return err
 	}
 	logger.
 		WithFields(createMap(c, after.Sub(before), lrw, err)).
-		Infof("[%s] %s %d", c.Request().Method, c.Path(), lrw.statusCode)
+		Infof("[%s] %s %d", request.Method, c.Path(), lrw.statusCode)
 	return err
 }
 

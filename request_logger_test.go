@@ -89,6 +89,28 @@ func TestRequestLogger_LogTest(t *testing.T) {
 
 }
 
+func TestRequestLogger_HealthNoLogTest(t *testing.T) {
+	buffer := &bytes.Buffer{}
+	URL, _ := url.Parse("http://somedomain/health")
+	writer, _ := NewWriter()
+	context := createTestContext(writer, URL, buffer)
+	now := time.Now()
+	provider := testTimeProvider{calls: []time.Time{now, now.Add(755 * time.Millisecond)}}
+	nextCalled := false
+	nextPtr := &nextCalled
+	var next echo.HandlerFunc = func(context echo.Context) error {
+		*nextPtr = true
+		context.Response().WriteHeader(200)
+		return nil
+	}
+	err := RequestLoggerMiddleware(provider.Next)(next)(context)
+	assert.Nil(t, err)
+	fields := getLogFields(buffer, err, t)
+
+	assert.Equal(t, len(fields), 0)
+
+}
+
 func createTestContext(writer *responseWriter, URL *url.URL, buffer *bytes.Buffer) *Context {
 	return &Context{
 		Context: &testContext{
@@ -112,12 +134,11 @@ func createResponse(writer *responseWriter) *echo.Response {
 		Size:   150,
 	}
 }
-
 func createRequest(URL *url.URL) *http.Request {
 	return &http.Request{
 		Method:        "GET",
 		URL:           URL,
-		Header:        http.Header{"Correlation-Id": []string{"set_one"}},
+		Header:        http.Header{"Correlation-Id": []string{"set_one"}, "User-Agent": []string{"ELB-HealthChecker/2.0"}},
 		ContentLength: 34567,
 		Host:          "this.is.a.domain",
 		RemoteAddr:    "",
@@ -128,8 +149,10 @@ func createRequest(URL *url.URL) *http.Request {
 func getLogFields(buffer *bytes.Buffer, err error, t *testing.T) logrus.Fields {
 	fields := logrus.Fields{}
 	logStatement := buffer.Bytes()
-	err = json.Unmarshal(logStatement, &fields)
-	assert.Nil(t, err)
+	if len(logStatement) > 0 {
+		err = json.Unmarshal(logStatement, &fields)
+		assert.Nil(t, err)
+	}
 	return fields
 }
 
