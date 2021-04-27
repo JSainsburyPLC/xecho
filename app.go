@@ -14,6 +14,11 @@ import (
 
 const headerBuildVersion = "Build-Version"
 
+type Xecho struct {
+	Echo        *echo.Echo
+	NewRelicApp newrelic.Application
+}
+
 type Config struct {
 	ProjectName       string
 	AppName           string
@@ -46,21 +51,22 @@ func NewConfig() Config {
 	}
 }
 
+func New(conf Config) *Xecho {
+	e, nrApp := newEcho(conf)
+	return &Xecho{NewRelicApp: nrApp, Echo: e}
+}
+
 func Echo(conf Config) *echo.Echo {
+	e, _ := newEcho(conf)
+	return e
+}
+
+func newEcho(conf Config) (*echo.Echo, newrelic.Application) {
 	logger := logger(conf)
-	logger.WithFields(
-		logrus.Fields{
-			"project":       conf.ProjectName,
-			"application":   conf.AppName,
-			"environment":   conf.EnvName,
-			"build_version": conf.BuildVersion,
-			"hostname":      getHostName(),
-		}).Infof("XEcho app created %s(%s)", conf.AppName, conf.BuildVersion)
 
 	newRelicApp := createNewRelicApp(conf, logger)
 
 	e := echo.New()
-
 	e.HideBanner = true
 	e.HidePort = true
 	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName)
@@ -77,7 +83,7 @@ func Echo(conf Config) *echo.Echo {
 
 	addHealthCheck(conf, e)
 
-	return e
+	return e, newRelicApp
 }
 
 func addHealthCheck(conf Config, e *echo.Echo) {
@@ -106,6 +112,14 @@ func logger(conf Config) *logrus.Logger {
 	logger := logrus.New()
 	logger.SetLevel(conf.LogLevel)
 	logger.SetFormatter(conf.LogFormatter)
+	logger.WithFields(
+		logrus.Fields{
+			"project":       conf.ProjectName,
+			"application":   conf.AppName,
+			"environment":   conf.EnvName,
+			"build_version": conf.BuildVersion,
+			"hostname":      getHostName(),
+		}).Infof("XEcho app created %s(%s)", conf.AppName, conf.BuildVersion)
 	return logger
 }
 

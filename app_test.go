@@ -1,10 +1,11 @@
 package xecho_test
 
 import (
-	"github.com/JSainsburyPLC/xecho"
-	"github.com/steinfletcher/apitest"
 	"net/http"
 	"testing"
+
+	"github.com/JSainsburyPLC/xecho"
+	"github.com/steinfletcher/apitest"
 )
 
 func TestHealthCheck(t *testing.T) {
@@ -16,7 +17,7 @@ func TestHealthCheck(t *testing.T) {
 		Body(`{"status": "ok"}`).
 		End()
 	apitest.New().
-		Handler(xecho.Echo(config("test"))).
+		Handler(xecho.New(config("test")).Echo).
 		Get("/test/health").
 		Expect(t).
 		Status(http.StatusOK).
