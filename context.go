@@ -47,10 +47,8 @@ func (c *Context) AddNewRelicAttribute(key string, val interface{}) {
 }
 
 func ContextMiddleware(
-	appName string,
-	envName string,
 	buildVersion string,
-	logger *logrus.Logger,
+	logger *logrus.Entry,
 	isDebug bool,
 	newRelicApp newrelic.Application,
 ) echo.MiddlewareFunc {
@@ -64,8 +62,6 @@ func ContextMiddleware(
 				c.Path(),
 				ip,
 				correlationID,
-				appName,
-				envName,
 			)
 
 			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug, buildVersion)

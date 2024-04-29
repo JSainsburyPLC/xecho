@@ -69,10 +69,10 @@ func newEcho(conf Config) (*echo.Echo, newrelic.Application) {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
-	e.Logger = appScopeLogger(logger, conf.AppName, conf.EnvName)
+	e.Logger = &Logger{logger}
 
 	// the order of these middleware is important - context should be first, error should be after logging ones
-	e.Use(ContextMiddleware(conf.AppName, conf.EnvName, conf.BuildVersion, logger, conf.IsDebug, newRelicApp))
+	e.Use(ContextMiddleware(conf.BuildVersion, logger, conf.IsDebug, newRelicApp))
 	e.Use(PanicHandlerMiddleware(conf.ErrorHandler))
 	if conf.UseDefaultHeaders {
 		e.Use(DefaultHeadersMiddleware())
@@ -108,26 +108,32 @@ func getHostName() string {
 	return name
 }
 
-func logger(conf Config) *logrus.Logger {
+func getServiceName(projectName, appName, envName string) string {
+	return fmt.Sprintf("%s-%s-%s", projectName, appName, envName)
+}
+
+func logger(conf Config) *logrus.Entry {
 	logger := logrus.New()
 	logger.SetLevel(conf.LogLevel)
 	logger.SetFormatter(conf.LogFormatter)
-	logger.WithFields(
+	entry := logger.WithFields(
 		logrus.Fields{
+			"service_name":  getServiceName(conf.ProjectName, conf.AppName, conf.EnvName),
 			"project":       conf.ProjectName,
 			"application":   conf.AppName,
 			"environment":   conf.EnvName,
 			"build_version": conf.BuildVersion,
 			"hostname":      getHostName(),
-		}).Infof("XEcho app created %s(%s)", conf.AppName, conf.BuildVersion)
-	return logger
+		})
+	entry.Infof("XEcho app created %s(%s)", conf.AppName, conf.BuildVersion)
+	return entry
 }
 
-func createNewRelicApp(conf Config, logger *logrus.Logger) newrelic.Application {
-	nrConf := newrelic.NewConfig(fmt.Sprintf("%s-%s-%s", conf.ProjectName, conf.AppName, conf.EnvName), conf.NewRelicLicense)
+func createNewRelicApp(conf Config, logger *logrus.Entry) newrelic.Application {
+	nrConf := newrelic.NewConfig(getServiceName(conf.ProjectName, conf.AppName, conf.EnvName), conf.NewRelicLicense)
 	nrConf.CrossApplicationTracer.Enabled = false
 	nrConf.DistributedTracer.Enabled = true
-	nrConf.Logger = nrlogrus.Transform(logger)
+	nrConf.Logger = nrlogrus.Transform(logger.Logger)
 	nrConf.Enabled = conf.NewRelicEnabled
 	nrConf.Labels = map[string]string{"Env": conf.EnvName, "Project": conf.ProjectName}
 	app, err := newrelic.NewApplication(nrConf)
