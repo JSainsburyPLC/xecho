@@ -77,32 +77,14 @@ func dumpResponse(c *Context, drw *debugResponseWriter) {
 	}
 }
 
-func appScopeLogger(
-	logger *logrus.Logger,
-	appName string,
-	envName string,
-) *Logger {
-	entry := logger.WithFields(logrus.Fields{
-		"application": appName,
-		"env":         envName,
-		"scope":       "application",
-	})
-	return &Logger{entry}
-}
-
 func requestScopeLogger(
-	logger *logrus.Logger,
+	logger *logrus.Entry,
 	r *http.Request,
 	route string,
 	ip string,
 	correlationID string,
-	appName string,
-	envName string,
 ) *Logger {
 	ctxLogger := logger.WithFields(logrus.Fields{
-		"application":    appName,
-		"env":            envName,
-		"scope":          "request",
 		"correlation_id": correlationID,
 		"url":            r.RequestURI,
 		"route":          route,
