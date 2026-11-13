@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent"
 	"github.com/sirupsen/logrus"
 )
@@ -65,7 +65,11 @@ func ContextMiddleware(
 			)
 
 			cc := NewContext(c, newRelicApp, logger, correlationID, isDebug, buildVersion)
-			defer cc.NewRelicTx.End()
+			defer func() {
+				if err := cc.NewRelicTx.End(); err != nil {
+					cc.Logger().Errorf("failed to end New Relic transaction: %v", err)
+				}
+			}()
 
 			return h(cc)
 		}

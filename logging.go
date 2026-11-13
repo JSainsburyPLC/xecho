@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 )
@@ -33,7 +32,6 @@ func DebugLoggerMiddleware(isDebug bool) echo.MiddlewareFunc {
 }
 
 type debugResponseWriter struct {
-	isDebug    bool
 	w          http.ResponseWriter
 	statusCode int
 	body       bytes.Buffer
@@ -62,7 +60,7 @@ func dumpRequest(c *Context) {
 
 func dumpResponse(c *Context, drw *debugResponseWriter) {
 	res := &http.Response{
-		Body:          ioutil.NopCloser(&drw.body),
+		Body:          io.NopCloser(&drw.body),
 		Header:        drw.Header(),
 		StatusCode:    drw.statusCode,
 		ProtoMajor:    1,
