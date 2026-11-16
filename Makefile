@@ -1,9 +1,12 @@
 SHELL := /bin/bash
 GOTOOL := go tool -modfile=tools/go.mod
 
-# Known advisories with no upstream fix yet. Remove each ID once echo ships a fix.
+# Reachable advisories accepted by `make vulncheck`; see scripts/vulncheck.sh. Comment why for each ID.
+# Long-term accepted risks (never fail while reported):
+VULNCHECK_ACCEPTED :=
+# Accepted only until a fix is released; vulncheck fails once govulncheck reports a fixed version.
 # GO-2026-6872: rate limiter keyed on spoofable IP; GO-2026-6875: proxy forwards X-Real-IP. xecho uses neither middleware.
-VULNCHECK_IGNORE := GO-2026-6872 GO-2026-6875
+VULNCHECK_UNTIL_FIXED := GO-2026-6872 GO-2026-6875
 
 .PHONY: test tools fmt lint vulncheck apidiff
 
@@ -23,21 +26,9 @@ fmt:
 lint:
 	$(GOTOOL) golangci-lint run ./...
 
-# Fails on any reachable vulnerability not listed in VULNCHECK_IGNORE.
 vulncheck:
-	@set -euo pipefail; \
-	found=$$($(GOTOOL) govulncheck -format json ./... \
-		| jq -r 'select(.finding.trace[0].function != null) | .finding.osv' | sort -u); \
-	ignore="$(VULNCHECK_IGNORE)"; status=0; \
-	for id in $$found; do \
-		if [[ " $$ignore " == *" $$id "* ]]; then echo "ignored (known): $$id"; \
-		else echo "VULNERABLE: $$id - https://pkg.go.dev/vuln/$$id"; status=1; fi; \
-	done; \
-	for id in $$ignore; do \
-		[[ " $$(echo $$found) " == *" $$id "* ]] || echo "stale ignore (no longer reported, remove it): $$id"; \
-	done; \
-	if [[ $$status -ne 0 ]]; then echo "Run '$(GOTOOL) govulncheck ./...' for traces."; fi; \
-	exit $$status
+	@GOTOOL="$(GOTOOL)" VULNCHECK_ACCEPTED="$(VULNCHECK_ACCEPTED)" \
+		VULNCHECK_UNTIL_FIXED="$(VULNCHECK_UNTIL_FIXED)" ./scripts/vulncheck.sh
 
 # Reports API changes since the latest tag and suggests the next version. Requires a clean worktree.
 apidiff:

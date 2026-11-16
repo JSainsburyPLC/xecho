@@ -56,7 +56,7 @@ jobs:
           cache-dependency-path: |
             go.sum
             tools/go.sum
-      # Known unfixed advisories are allowlisted via VULNCHECK_IGNORE in the Makefile.
+      # Accepted advisories are listed in the Makefile (VULNCHECK_ACCEPTED / VULNCHECK_UNTIL_FIXED).
       - run: make vulncheck
 
   apidiff:

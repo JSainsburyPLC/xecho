@@ -50,5 +50,7 @@ Tool versions are pinned in `tools/go.mod` and run with `go tool`, so nothing ne
 * `make tools` - pre-build the pinned tools
 * `make fmt` - format with gofmt and goimports
 * `make lint` - golangci-lint
-* `make vulncheck` - govulncheck; fails on reachable vulnerabilities not listed in `VULNCHECK_IGNORE` in the Makefile
+* `make vulncheck` - govulncheck; fails on reachable vulnerabilities unless listed in the Makefile as
+  `VULNCHECK_ACCEPTED` (long-term) or `VULNCHECK_UNTIL_FIXED` (fails once a fix is released). Also runs
+  weekly on `master` via the "Scheduled vulncheck" workflow, which can be triggered manually from the Actions tab
 * `make apidiff` - gorelease against the latest tag (needs a clean worktree)
