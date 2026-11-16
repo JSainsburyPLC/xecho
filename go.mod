@@ -1,10 +1,10 @@
 module github.com/JSainsburyPLC/xecho
 
-go 1.27.4
+go 1.27
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/labstack/echo/v4 v4.16.4
+	github.com/labstack/echo/v4 v4.16.5
 	github.com/labstack/gommon v0.5.0
 	github.com/newrelic/go-agent v2.9.0+incompatible
 	github.com/sirupsen/logrus v1.10.2

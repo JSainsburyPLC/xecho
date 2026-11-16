@@ -11,7 +11,7 @@ A thin wrapper around https://echo.labstack.com. Includes
 
 ## Requirements
 
-* Go 1.27.4 or later
+* Go 1.27 or later
 * Echo v4 (`github.com/labstack/echo/v4`). Versions before v0.2.0 used Echo v3; when upgrading,
   change your `github.com/labstack/echo` imports (including `echo/middleware`) to `echo/v4`.
 

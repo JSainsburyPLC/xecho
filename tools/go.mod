@@ -1,6 +1,6 @@
 module github.com/JSainsburyPLC/xecho/tools
 
-go 1.27.4
+go 1.27
 
 tool (
 	github.com/golangci/golangci-lint/v2/cmd/golangci-lint

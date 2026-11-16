@@ -2,10 +2,11 @@ package xecho
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"runtime"
 	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 const stackSize = 4 << 10 // 4kb
