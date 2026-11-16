@@ -29,8 +29,9 @@ Upgrading from v0.1.x requires changes in consuming services:
 
 ## Client IP behind a load balancer
 
-The `ip` field in request logs and New Relic comes from Echo's `RealIP()`. By default this is the
-connection's remote address, so behind a load balancer it is the balancer's IP. Set
+The `ip` field in request logs and New Relic comes from Echo's `RealIP()`. By default xecho uses
+`echo.ExtractIPDirect()`, so the IP is the connection's remote address and `X-Forwarded-For` /
+`X-Real-IP` are ignored. Behind a load balancer this is the balancer's IP. Set
 `Config.IPExtractor` to trust forwarding headers only from your proxies:
 
 ```go

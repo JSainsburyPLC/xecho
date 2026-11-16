@@ -37,7 +37,7 @@ func TestIPExtractor(t *testing.T) {
 		extractor echo.IPExtractor
 		want      string
 	}{
-		"default ignores X-Forwarded-For":         {nil, "192.0.2.1"},
+		"default ignores forwarding headers":      {nil, "192.0.2.1"},
 		"trusted proxy uses X-Forwarded-For":      {echo.ExtractIPFromXFFHeader(echo.TrustIPRange(proxyNet)), "203.0.113.9"},
 		"untrusted proxy ignores X-Forwarded-For": {echo.ExtractIPFromXFFHeader(), "192.0.2.1"},
 	}
@@ -52,6 +52,7 @@ func TestIPExtractor(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "/ip", nil)
 			req.Header.Set(echo.HeaderXForwardedFor, "203.0.113.9")
+			req.Header.Set(echo.HeaderXRealIP, "198.51.100.7")
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 
