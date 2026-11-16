@@ -34,7 +34,7 @@ func (t *loggingTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	reqTime := time.Now().Sub(startTime)
+	reqTime := time.Since(startTime)
 
 	logger.Infof("Outgoing request: %s %s %d (%fs)", r.Method, r.URL.String(), res.StatusCode, reqTime.Seconds())
 

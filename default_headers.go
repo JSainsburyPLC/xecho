@@ -1,6 +1,6 @@
 package xecho
 
-import "github.com/labstack/echo"
+import "github.com/labstack/echo/v4"
 
 func DefaultHeadersMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

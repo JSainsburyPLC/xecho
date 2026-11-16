@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -69,7 +69,7 @@ func TestRequestLogger_LogTest(t *testing.T) {
 	}
 	err := RequestLoggerMiddleware(provider.Next)(next)(context)
 	assert.Nil(t, err)
-	fields := getLogFields(buffer, err, t)
+	fields := getLogFields(buffer, t)
 
 	assert.Equal(t, "[GET] /this/is/the/site 200", fields["msg"])
 	assert.Equal(t, "set_one", fields["correlation_id"])
@@ -105,7 +105,7 @@ func TestRequestLogger_HealthNoLogTest(t *testing.T) {
 	}
 	err := RequestLoggerMiddleware(provider.Next)(next)(context)
 	assert.Nil(t, err)
-	fields := getLogFields(buffer, err, t)
+	fields := getLogFields(buffer, t)
 
 	assert.Equal(t, len(fields), 0)
 
@@ -146,11 +146,11 @@ func createRequest(URL *url.URL) *http.Request {
 	}
 }
 
-func getLogFields(buffer *bytes.Buffer, err error, t *testing.T) logrus.Fields {
+func getLogFields(buffer *bytes.Buffer, t *testing.T) logrus.Fields {
 	fields := logrus.Fields{}
 	logStatement := buffer.Bytes()
 	if len(logStatement) > 0 {
-		err = json.Unmarshal(logStatement, &fields)
+		err := json.Unmarshal(logStatement, &fields)
 		assert.Nil(t, err)
 	}
 	return fields

@@ -1,15 +1,17 @@
 package xecho
 
 import (
-	"github.com/labstack/echo"
+	"bytes"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent"
 	"github.com/newrelic/go-agent/_integrations/nrlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestEchoHandler(t *testing.T) {
@@ -40,6 +42,31 @@ func TestContextMiddleware(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+type endErrorTx struct{ newrelic.Transaction }
+
+func (endErrorTx) End() error { return assert.AnError }
+
+type endErrorApp struct{ newrelic.Application }
+
+func (a endErrorApp) StartTransaction(name string, w http.ResponseWriter, r *http.Request) newrelic.Transaction {
+	return endErrorTx{a.Application.StartTransaction(name, w, r)}
+}
+
+func TestContextMiddleware_LogsNewRelicEndError(t *testing.T) {
+	t.Parallel()
+
+	ctx, _, _ := getEchoTestCtx()
+	var buf bytes.Buffer
+	logger := logrus.New()
+	logger.SetOutput(&buf)
+	mw := ContextMiddleware("build-1.2.3", logrus.NewEntry(logger), false, endErrorApp{stubNewRelicApp()})
+
+	err := mw(EchoHandler(func(c *Context) error { return nil }))(ctx)
+
+	assert.Nil(t, err)
+	assert.Contains(t, buf.String(), "failed to end New Relic transaction")
+}
+
 func TestGetCorrelationID(t *testing.T) {
 	// No id in request - generate a new one
 	r := httptest.NewRequest("GET", "/", nil)
@@ -55,7 +82,7 @@ func TestGetCorrelationID(t *testing.T) {
 
 func NullLogger() *logrus.Logger {
 	log := logrus.New()
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 	return log
 }
 
@@ -72,8 +99,4 @@ func stubNewRelicApp() newrelic.Application {
 	config.Enabled = false
 	app, _ := newrelic.NewApplication(config)
 	return app
-}
-
-func stubNewRelicTX() newrelic.Transaction {
-	return stubNewRelicApp().StartTransaction("test", nil, nil)
 }
