@@ -32,6 +32,11 @@ type Config struct {
 	ErrorHandler      ErrorHandlerFunc
 	UseDefaultHeaders bool
 	RoutePrefix       string
+	// IPExtractor sets how the client IP is derived for logs and New Relic attributes.
+	// Nil keeps Echo's default, which uses the connection's remote address and ignores
+	// X-Forwarded-For/X-Real-IP. Behind a load balancer, set echo.ExtractIPFromXFFHeader
+	// with the proxy's ranges trusted to record the real client IP.
+	IPExtractor echo.IPExtractor
 }
 
 func NewConfig() Config {
@@ -70,6 +75,7 @@ func newEcho(conf Config) (*echo.Echo, newrelic.Application) {
 	e.HideBanner = true
 	e.HidePort = true
 	e.Logger = &Logger{logger}
+	e.IPExtractor = conf.IPExtractor
 
 	// the order of these middleware is important - context should be first, error should be after logging ones
 	e.Use(ContextMiddleware(conf.BuildVersion, logger, conf.IsDebug, newRelicApp))

@@ -53,6 +53,8 @@ func (a endErrorApp) StartTransaction(name string, w http.ResponseWriter, r *htt
 }
 
 func TestContextMiddleware_LogsNewRelicEndError(t *testing.T) {
+	t.Parallel()
+
 	ctx, _, _ := getEchoTestCtx()
 	var buf bytes.Buffer
 	logger := logrus.New()

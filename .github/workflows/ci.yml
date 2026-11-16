@@ -56,9 +56,8 @@ jobs:
           cache-dependency-path: |
             go.sum
             tools/go.sum
-      # Advisory until echo v4 ships fixes for GO-2026-6872 and GO-2026-6875.
+      # Known unfixed advisories are allowlisted via VULNCHECK_IGNORE in the Makefile.
       - run: make vulncheck
-        continue-on-error: true
 
   apidiff:
     if: github.event_name == 'pull_request'
